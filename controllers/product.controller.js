@@ -43,8 +43,28 @@ exports.getProduct = async (req, res, next) => {
             queryItem.fields = fields;
         }
 
+        // pagination
+        if (req.query.page) {
+            // 50 products
+            // each page 10 products
+            // page 1 -> 1-10
+            // page 2 -> 11-20
+            // page 3 -> 21-30   -->page 3 -> skip value 1-20 (page 2 porjonto products gulo baad) --> 3-1=2 ==> 2*10 = 20 products baad
+            // page 4 -> 31-40   -->page 4 -> skip value 1-30 (page 3 porjonto product gulo baad) --> 4-1=3 ==> 3*10 = 30 products baad
+            // page 5 -> 41-50
+            // conclusion amra jei page dekhte chacchi, shei page er ager page porjonto porduct shob baad dite pari. 1 kom niye page nibo.
+            // clicking on page 3 -> 3-1 = 2
+            // clicking on page 4 -> 4-1 = 3
+            // !!!! skip value is (page-1)
+            const { page = 1, limit = 10 } = req.query;
+            const skip = Number(page - 1) * Number(limit);
+            queryItem.skip = skip;
+            queryItem.limit = Number(limit);
+            // console.log(queryItem)
+        }
+
         //it will return every object
-        const result = await getProductService(filters, queryItem.sortBy, queryItem.fields);
+        const result = await getProductService(filters, queryItem.sortBy, queryItem.fields, queryItem.skip, queryItem.limit);
         res.status(200).json({
             success: true,
             data: result
